@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Painel do Motorista</title>
+
+<!-- PWA / iOS Add to Home Screen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B1D1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Motorista">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+  html, body { margin: 0; padding: 0; background: #1B1D1F; }
+</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #1B1D1F;
+    --surface: #232628;
+    --surface-2: #2B2F32;
+    --surface-3: #303539;
+    --border: #383C3F;
+    --accent: #F2A93B;
+    --accent-dim: #B9832E;
+    --accent-soft: rgba(242,169,59,0.14);
+    --positive: #6FCF97;
+    --positive-soft: rgba(111,207,151,0.14);
+    --negative: #E8695C;
+    --negative-soft: rgba(232,105,92,0.14);
+    --text: #ECEAE5;
+    --text-muted: #91979D;
+    --text-faint: #63686C;
+    --font-display: 'IBM Plex Mono', 'Courier New', monospace;
+    --font-body: 'Manrope', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  #app-root {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 20px 16px 40px;
+    min-height: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-title { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+  .header-title span { color: var(--accent); }
+  .header-sub { font-size: 12px; color: var(--text-faint); font-family: var(--font-display); margin-top: 2px; }
+
+  /* Odometer-style numbers */
+  .odometer { font-family: var(--font-display); font-weight: 600; display: inline-flex; align-items: baseline; }
+  .odometer .digit {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 3px;
+    margin: 0 1px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    font-variant-numeric: tabular-nums;
+  }
+  .odometer .sep { padding: 0 1px; color: inherit; opacity: 0.7; }
+  .odometer .unit { font-family: var(--font-body); font-weight: 600; font-size: 0.6em; margin-left: 5px; color: var(--text-muted); }
+
+  /* action buttons */
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .action-btn {
+    border: none; border-radius: 10px; padding: 14px; font-family: var(--font-body);
+    font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px;
+  }
+  .action-btn.ganhos { background: var(--positive); color: #1B1D1F; }
+  .action-btn.gastos { background: var(--negative); color: #1B1D1F; }
+  .action-btn .plus { font-size: 17px; line-height: 1; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
+  .card .odometer { font-size: 17px; }
+  .card.accent-positive .odometer { color: var(--positive); }
+  .card.accent-negative .odometer { color: var(--negative); }
+  .card.accent-primary .odometer { color: var(--accent); }
+  .card-foot { font-size: 11px; color: var(--text-faint); margin-top: 6px; font-family: var(--font-display); }
+
+  .period-row {
+    display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .period-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+  }
+  .period-btn.active { background: var(--accent-soft); border-color: var(--accent-dim); color: var(--accent); }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel-title { font-size: 13px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title .hint { font-size: 11px; color: var(--text-faint); font-weight: 500; }
+
+  .chart-wrap { display: flex; align-items: flex-end; gap: 6px; height: 90px; padding-top: 6px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; max-width: 26px; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .bar-day { font-size: 9px; color: var(--text-faint); font-family: var(--font-display); }
+
+  form.entry-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .field input {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 10px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+  .field input:focus { border-color: var(--accent-dim); }
+  .field input::placeholder { color: var(--text-faint); font-family: var(--font-body); }
+
+  .submit-btn {
+    grid-column: 1 / -1;
+    background: var(--accent);
+    color: #1B1D1F;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+  .submit-btn:active { opacity: 0.85; }
+
+  .entry-list { display: flex; flex-direction: column; gap: 8px; }
+  .entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+  .entry-date { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--text); width: 62px; flex-shrink: 0; }
+  .entry-mid { flex: 1; display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--font-display); font-size: 11px; color: var(--text-muted); }
+  .entry-mid b { color: var(--text); font-weight: 600; }
+  .entry-obs { width: 100%; font-family: var(--font-body); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .entry-net { font-family: var(--font-display); font-weight: 700; font-size: 13px; margin-left: 10px; flex-shrink: 0; }
+  .del-btn {
+    background: none; border: none; color: var(--text-faint); cursor: pointer;
+    font-size: 16px; padding: 2px 6px; margin-left: 4px; flex-shrink: 0;
+  }
+  .del-btn:hover { color: var(--negative); }
+
+  .lancar-btn {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .lancar-btn:hover { background: var(--accent); color: #1B1D1F; }
+
+  .fixed-badge {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 100px;
+    background: var(--surface-3);
+    color: var(--text-muted);
+  }
+
+  .empty-state { text-align: center; padding: 28px 10px; color: var(--text-faint); font-size: 13px; }
+  .empty-state b { display: block; color: var(--text-muted); font-size: 14px; margin-bottom: 4px; }
+
+  .footer-row { display: flex; justify-content: center; margin-top: 8px; }
+  .reset-link { background: none; border: none; color: var(--text-faint); font-size: 11px; text-decoration: underline; cursor: pointer; font-family: var(--font-body); }
+
+  .loading-state { text-align: center; padding: 60px 10px; color: var(--text-faint); font-family: var(--font-display); font-size: 12px; }
+
+  /* modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(10,11,13,0.72);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 50;
+    padding: 0;
+  }
+  .modal-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px 16px 0 0;
+    padding: 18px 16px 22px; width: 100%; max-width: 780px; max-height: 88vh; overflow-y: auto;
+  }
+  @media (min-width: 620px) {
+    .modal-backdrop { align-items: center; }
+    .modal-card { border-radius: 16px; max-width: 480px; }
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .modal-title { font-size: 15px; font-weight: 800; }
+  .modal-close { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px; }
+
+  @media (max-width: 420px) {
+    .cards { grid-template-columns: 1fr 1fr; }
+    form.entry-form { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div id="app-root">
+  <div class="loading-state">Carregando seus dados…</div>
+</div>
+
+<script>
+(function () {
+  const root = document.getElementById('app-root');
+
+  // Shim de armazenamento local (funciona fora do Claude, dados presos a este navegador)
+  const memoryFallback = {};
+  let storageAvailable = true;
+  try {
+    const testKey = '__test__' + Date.now();
+    window.localStorage.setItem(testKey, '1');
+    window.localStorage.removeItem(testKey);
+  } catch (e) {
+    storageAvailable = false;
+  }
+  const storage = {
+    get: async (key) => {
+      const raw = storageAvailable ? window.localStorage.getItem(key) : (key in memoryFallback ? memoryFallback[key] : null);
+      if (raw === null || raw === undefined) throw new Error('not found');
+      return { key, value: raw };
+    },
+    set: async (key, value) => {
+      if (storageAvailable) window.localStorage.setItem(key, value);
+      else memoryFallback[key] = value;
+      return { key, value };
+    }
+  };
+
+  const STORAGE_KEY = 'entries';
+  const FIXED_KEY = 'fixed_expenses';
+  const SEED_KEY = 'fixed_seeded';
+  const BATTERY_CAPACITY_KWH = 44.9; // BYD Dolphin GS
+
+  let entries = [];
+  let fixedExpenses = [];
+  let period = 'week'; // today | week | month | all
+  let activeModal = null; // null | 'ganhos' | 'gastos'
+
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtBRL(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtKm(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function fmtKwh(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function fmtDateShort(iso) {
+    const [y,m,d] = iso.split('-');
+    return d + '/' + m;
+  }
+  function odometer(str, unit) {
+    const chars = str.split('').map(ch => {
+      if (/[0-9]/.test(ch)) return '<span class="digit">' + ch + '</span>';
+      return '<span class="sep">' + ch + '</span>';
+    }).join('');
+    return '<span class="odometer">' + chars + (unit ? '<span class="unit">' + unit + '</span>' : '') + '</span>';
+  }
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function loadEntries() {
+    try {
+      const res = await storage.get(STORAGE_KEY);
+      entries = res && res.value ? JSON.parse(res.value) : [];
+    } catch (e) {
+      entries = [];
+    }
+  }
+  async function saveEntries() {
+    try {
+      await storage.set(STORAGE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      console.error('Falha ao salvar', e);
+    }
+  }
+
+  async function loadFixedExpenses() {
+    try {
+      const res = await storage.get(FIXED_KEY);
+      fixedExpenses = res && res.value ? JSON.parse(res.value) : [];
+    } catch (e) {
+      fixedExpenses = [];
+    }
+    try {
+      await storage.get(SEED_KEY);
+    } catch (e) {
+      fixedExpenses = [
+        { id: 'f_mei', descricao: 'MEI', valor: 86.05, dia: 20, parcelasRestantes: null },
+        { id: 'f_carro', descricao: 'Prestação do carro', valor: 4229.45, dia: 16, parcelasRestantes: 23 }
+      ];
+      await saveFixedExpenses();
+      try { await storage.set(SEED_KEY, 'true'); } catch (e2) {}
+    }
+  }
+  async function saveFixedExpenses() {
+    try {
+      await storage.set(FIXED_KEY, JSON.stringify(fixedExpenses));
+    } catch (e) {
+      console.error('Falha ao salvar contas fixas', e);
+    }
+  }
+  function fixedMonthlyTotal() {
+    return fixedExpenses.reduce((s, f) => s + (Number(f.valor) || 0), 0);
+  }
+
+  function filterByPeriod(list) {
+    if (period === 'all') return list;
+    const now = new Date();
+    const today = todayISO();
+    if (period === 'today') return list.filter(e => e.date === today);
+    if (period === 'week') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 6);
+      const cutoffISO = cutoff.getFullYear() + '-' + String(cutoff.getMonth()+1).padStart(2,'0') + '-' + String(cutoff.getDate()).padStart(2,'0');
+      return list.filter(e => e.date >= cutoffISO);
+    }
+    if (period === 'month') {
+      const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      return list.filter(e => e.date.startsWith(ym));
+    }
+    return list;
+  }
+
+  // Entradas podem ser tipo 'ganho' ou 'gasto' (novo modelo).
+  // Registros antigos sem "tipo" combinavam tudo numa linha só — seguem funcionando.
+  function computeTotals(list) {
+    let ganhos = 0, gastos = 0, km = 0, corridas = 0, kwh = 0, kwhKm = 0;
+    list.forEach(e => {
+      if (e.tipo === 'gasto') {
+        gastos += Number(e.valor) || 0;
+        return;
+      }
+      // tipo 'ganho' ou registro legado (sem tipo)
+      ganhos += Number(e.ganhos) || 0;
+      km += Number(e.km) || 0;
+      corridas += Number(e.corridas) || 0;
+      if (e.tipo === undefined) gastos += Number(e.gastos) || 0; // legado
+      if (e.bateriaSaida !== undefined && e.bateriaSaida !== null && e.bateriaSaida !== '' &&
+          e.bateriaChegada !== undefined && e.bateriaChegada !== null && e.bateriaChegada !== '') {
+        const pct = Math.max(0, (Number(e.bateriaSaida) || 0) - (Number(e.bateriaChegada) || 0));
+        const entryKwh = (pct / 100) * BATTERY_CAPACITY_KWH;
+        kwh += entryKwh;
+        if (Number(e.km) > 0) kwhKm += Number(e.km);
+      }
+    });
+    const liquido = ganhos - gastos;
+    const rsPorKm = km > 0 ? liquido / km : 0;
+    const consumoPor100km = kwhKm > 0 ? (kwh / kwhKm) * 100 : 0;
+    return { ganhos, gastos, km, corridas, liquido, rsPorKm, kwh, consumoPor100km };
+  }
+
+  function last7DaysData() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      const dayEntries = entries.filter(e => e.date === iso);
+      const t = computeTotals(dayEntries);
+      days.push({ iso, net: t.liquido });
+    }
+    return days;
+  }
+
+  function render() {
+    const filtered = filterByPeriod(entries).sort((a,b) => b.date.localeCompare(a.date));
+    const totals = computeTotals(filtered);
+    const chartData = last7DaysData();
+    const maxAbs = Math.max(1, ...chartData.map(d => Math.abs(d.net)));
+    const periodLabels = { today: 'Hoje', week: '7 dias', month: 'Este mês', all: 'Tudo' };
+
+    root.innerHTML = `
+      <div class="header">
+        <div>
+          <div class="header-title">Painel do <span>Motorista</span></div>
+          <div class="header-sub">BYD Dolphin GS · elétrico · dados salvos neste navegador</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn ganhos" id="open-ganhos"><span class="plus">+</span> Ganhos</button>
+        <button class="action-btn gastos" id="open-gastos"><span class="plus">+</span> Gastos</button>
+      </div>
+
+      <div class="cards">
+        <div class="card accent-positive">
+          <div class="card-label">Ganhos</div>
+          ${odometer('R$ ' + fmtBRL(totals.ganhos))}
+          <div class="card-foot">${totals.corridas} corrida${totals.corridas === 1 ? '' : 's'}</div>
+        </div>
+        <div class="card accent-negative">
+          <div class="card-label">Gastos</div>
+          ${odometer('R$ ' + fmtBRL(totals.gastos))}
+          <div class="card-foot">recarga, manutenção, contas etc.</div>
+        </div>
+        <div class="card accent-primary">
+          <div class="card-label">Km rodados</div>
+          ${odometer(fmtKm(totals.km), 'km')}
+          <div class="card-foot">${periodLabels[period]}</div>
+        </div>
+        <div class="card ${totals.liquido >= 0 ? 'accent-positive' : 'accent-negative'}">
+          <div class="card-label">Saldo líquido</div>
+          ${odometer((totals.liquido < 0 ? '-' : '') + 'R$ ' + fmtBRL(Math.abs(totals.liquido)))}
+          <div class="card-foot">R$ ${fmtBRL(totals.rsPorKm)} / km</div>
+        </div>
+      </div>
+
+      <div class="period-row">
+        ${['today','week','month','all'].map(p => `<button class="period-btn ${p === period ? 'active' : ''}" data-period="${p}">${periodLabels[p]}</button>`).join('')}
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Bateria <span class="hint">capacidade: 44,9 kWh</span></div>
+        <div class="cards" style="margin-bottom:0;">
+          <div class="card accent-primary">
+            <div class="card-label">Energia consumida</div>
+            ${odometer(fmtKwh(totals.kwh), 'kWh')}
+            <div class="card-foot">${periodLabels[period]}</div>
+          </div>
+          <div class="card accent-primary">
+            <div class="card-label">Consumo médio</div>
+            ${totals.consumoPor100km > 0 ? odometer(fmtKwh(totals.consumoPor100km), 'kWh/100km') : `<span class="odometer" style="color:var(--text-faint); font-size:13px;">sem dados suficientes</span>`}
+            <div class="card-foot">a cada 100 km rodados</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Últimos 7 dias <span class="hint">saldo líquido por dia</span></div>
+        <div class="chart-wrap">
+          ${chartData.map(d => {
+            const h = Math.max(3, Math.round((Math.abs(d.net) / maxAbs) * 74));
+            const color = d.net >= 0 ? 'var(--positive)' : 'var(--negative)';
+            return `<div class="bar-col">
+              <div class="bar" style="height:${h}px; background:${color};" title="${fmtDateShort(d.iso)}: R$ ${fmtBRL(d.net)}"></div>
+              <div class="bar-day">${fmtDateShort(d.iso)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Contas fixas e parcelas <span class="hint">R$ ${fmtBRL(fixedMonthlyTotal())}/mês comprometido</span></div>
+        <div class="entry-list">
+          ${fixedExpenses.length === 0 ? `
+            <div class="empty-state">
+              <b>Nenhuma conta cadastrada</b>
+              Adicione MEI, prestação do carro, compras parceladas etc.
+            </div>
+          ` : fixedExpenses.slice().sort((a,b) => a.dia - b.dia).map(f => `
+            <div class="entry-row">
+              <div class="entry-date">dia ${f.dia}</div>
+              <div class="entry-mid">
+                <span><b>${escapeHtml(f.descricao)}</b></span>
+                <span>R$ <b>${fmtBRL(f.valor)}</b></span>
+                <span class="fixed-badge">${f.parcelasRestantes === null || f.parcelasRestantes === undefined ? 'fixo/recorrente' : f.parcelasRestantes + 'x restante' + (f.parcelasRestantes === 1 ? '' : 's')}</span>
+              </div>
+              <button class="lancar-btn" data-id="${f.id}">Lançar este mês</button>
+              <button class="del-btn" data-fixedid="${f.id}" title="Excluir">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <form class="entry-form" id="fixed-form" style="margin-top:12px;">
+          <div class="field full">
+            <label>Descrição</label>
+            <input type="text" name="descricao" placeholder="ex: notebook em 10x" required />
+          </div>
+          <div class="field">
+            <label>Valor da parcela (R$)</label>
+            <input type="number" name="valor" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field">
+            <label>Dia de vencimento</label>
+            <input type="number" name="dia" min="1" max="31" placeholder="ex: 10" required />
+          </div>
+          <div class="field full">
+            <label>Parcelas restantes (deixe em branco se for fixo, tipo MEI)</label>
+            <input type="number" name="parcelas" min="1" step="1" placeholder="ex: 10" />
+          </div>
+          <button type="submit" class="submit-btn">Adicionar conta</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Histórico <span class="hint">${filtered.length} registro${filtered.length === 1 ? '' : 's'}</span></div>
+        <div class="entry-list">
+          ${filtered.length === 0 ? `
+            <div class="empty-state">
+              <b>Nenhum registro ainda</b>
+              Use os botões "+ Ganhos" e "+ Gastos" acima para começar.
+            </div>
+          ` : filtered.map(e => {
+            if (e.tipo === 'gasto') {
+              return `
+              <div class="entry-row">
+                <div class="entry-date">${fmtDateShort(e.date)}</div>
+                <div class="entry-mid">
+                  <span>⚡ <b>R$ ${fmtBRL(e.valor)}</b></span>
+                  ${e.obs ? `<div class="entry-obs">${escapeHtml(e.obs)}</div>` : ''}
+                </div>
+                <div class="entry-net" style="color:var(--negative)">- R$ ${fmtBRL(e.valor)}</div>
+                <button class="del-btn" data-id="${e.id}" title="Excluir">✕</button>
+              </div>`;
+            }
+            // tipo 'ganho' ou legado
+            const net = (Number(e.ganhos)||0) - (Number(e.gastos)||0);
+            const hasBattery = e.bateriaSaida !== undefined && e.bateriaSaida !== null &&
+                                e.bateriaChegada !== undefined && e.bateriaChegada !== null;
+            const pctUsada = hasBattery ? Math.max(0, e.bateriaSaida - e.bateriaChegada) : 0;
+            const kwhUsado = hasBattery ? (pctUsada / 100) * BATTERY_CAPACITY_KWH : 0;
+            const consumo100 = hasBattery && e.km > 0 ? (kwhUsado / e.km) * 100 : null;
+            return `
+            <div class="entry-row">
+              <div class="entry-date">${fmtDateShort(e.date)}</div>
+              <div class="entry-mid">
+                <span>💰 <b>R$ ${fmtBRL(e.ganhos)}</b></span>
+                ${e.corridas ? `<span>🚗 <b>${e.corridas}</b></span>` : ''}
+                ${e.km ? `<span>📍 <b>${fmtKm(e.km)} km</b></span>` : ''}
+                ${e.tipo === undefined && e.gastos ? `<span>⚡ <b>R$ ${fmtBRL(e.gastos)}</b></span>` : ''}
+                ${hasBattery ? `<span>🔋 <b>${e.bateriaSaida}%→${e.bateriaChegada}%</b> (${fmtKwh(kwhUsado)} kWh${consumo100 ? ' · ' + fmtKwh(consumo100) + '/100km' : ''})</span>` : ''}
+                ${e.obs ? `<div class="entry-obs">${escapeHtml(e.obs)}</div>` : ''}
+              </div>
+              <div class="entry-net" style="color:${net >= 0 ? 'var(--positive)' : 'var(--negative)'}">R$ ${fmtBRL(net)}</div>
+              <button class="del-btn" data-id="${e.id}" title="Excluir">✕</button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      ${entries.length > 0 ? `
+      <div class="footer-row">
+        <button class="reset-link" id="reset-btn">apagar todos os registros</button>
+      </div>` : ''}
+
+      <div class="footer-row" style="gap:16px; margin-top:${entries.length > 0 ? '6' : '8'}px;">
+        <button class="reset-link" id="export-btn">exportar backup</button>
+        <button class="reset-link" id="import-btn">importar backup</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none;" />
+      </div>
+
+      ${activeModal === 'ganhos' ? modalGanhos() : ''}
+      ${activeModal === 'gastos' ? modalGastos() : ''}
+    `;
+
+    bindEvents();
+  }
+
+  function modalGanhos() {
+    return `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">＋ Registrar ganhos do dia</div>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <form class="entry-form" id="ganhos-form">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" name="date" value="${todayISO()}" required />
+          </div>
+          <div class="field">
+            <label>Corridas</label>
+            <input type="number" name="corridas" min="0" step="1" placeholder="0" />
+          </div>
+          <div class="field">
+            <label>Ganhos (R$)</label>
+            <input type="number" name="ganhos" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field">
+            <label>Km rodados</label>
+            <input type="number" name="km" min="0" step="0.1" placeholder="0,0" />
+          </div>
+          <div class="field">
+            <label>Bateria ao sair (%)</label>
+            <input type="number" name="bateriaSaida" min="0" max="100" step="1" placeholder="100" value="100" />
+          </div>
+          <div class="field">
+            <label>Bateria ao voltar (%)</label>
+            <input type="number" name="bateriaChegada" min="0" max="100" step="1" placeholder="ex: 15" />
+          </div>
+          <div class="field full">
+            <label>Observação (opcional)</label>
+            <input type="text" name="obs" placeholder="ex: dia parado no trânsito" />
+          </div>
+          <button type="submit" class="submit-btn" style="background:var(--positive);">Salvar ganhos</button>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  function modalGastos() {
+    return `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">－ Registrar gasto</div>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <form class="entry-form" id="gastos-form">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" name="date" value="${todayISO()}" required />
+          </div>
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" name="valor" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field full">
+            <label>Observação (opcional)</label>
+            <input type="text" name="obs" placeholder="ex: recarga no posto X" />
+          </div>
+          <button type="submit" class="submit-btn" style="background:var(--negative);">Salvar gasto</button>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  function bindEvents() {
+    root.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', () => { period = btn.dataset.period; render(); });
+    });
+
+    const openGanhos = document.getElementById('open-ganhos');
+    if (openGanhos) openGanhos.addEventListener('click', () => { activeModal = 'ganhos'; render(); });
+    const openGastos = document.getElementById('open-gastos');
+    if (openGastos) openGastos.addEventListener('click', () => { activeModal = 'gastos'; render(); });
+
+    const backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) backdrop.addEventListener('click', (ev) => {
+      if (ev.target === backdrop) { activeModal = null; render(); }
+    });
+    const modalClose = document.getElementById('modal-close');
+    if (modalClose) modalClose.addEventListener('click', () => { activeModal = null; render(); });
+
+    const ganhosForm = document.getElementById('ganhos-form');
+    if (ganhosForm) {
+      ganhosForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ganhosForm);
+        entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          tipo: 'ganho',
+          date: fd.get('date') || todayISO(),
+          ganhos: parseFloat(fd.get('ganhos')) || 0,
+          km: parseFloat(fd.get('km')) || 0,
+          corridas: parseInt(fd.get('corridas')) || 0,
+          bateriaSaida: fd.get('bateriaSaida') !== '' ? parseFloat(fd.get('bateriaSaida')) : null,
+          bateriaChegada: fd.get('bateriaChegada') !== '' ? parseFloat(fd.get('bateriaChegada')) : null,
+          obs: (fd.get('obs') || '').toString().slice(0, 140)
+        });
+        await saveEntries();
+        activeModal = null;
+        render();
+      });
+    }
+
+    const gastosForm = document.getElementById('gastos-form');
+    if (gastosForm) {
+      gastosForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(gastosForm);
+        entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          tipo: 'gasto',
+          date: fd.get('date') || todayISO(),
+          valor: parseFloat(fd.get('valor')) || 0,
+          obs: (fd.get('obs') || '').toString().slice(0, 140)
+        });
+        await saveEntries();
+        activeModal = null;
+        render();
+      });
+    }
+
+    root.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (btn.dataset.fixedid) {
+          fixedExpenses = fixedExpenses.filter(f => f.id !== btn.dataset.fixedid);
+          await saveFixedExpenses();
+        } else {
+          entries = entries.filter(e => e.id !== btn.dataset.id);
+          await saveEntries();
+        }
+        render();
+      });
+    });
+
+    const fixedForm = document.getElementById('fixed-form');
+    if (fixedForm) {
+      fixedForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(fixedForm);
+        const parcelasRaw = fd.get('parcelas');
+        const item = {
+          id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          descricao: (fd.get('descricao') || '').toString().slice(0, 60),
+          valor: parseFloat(fd.get('valor')) || 0,
+          dia: Math.min(31, Math.max(1, parseInt(fd.get('dia')) || 1)),
+          parcelasRestantes: parcelasRaw ? parseInt(parcelasRaw) : null
+        };
+        fixedExpenses.push(item);
+        await saveFixedExpenses();
+        render();
+      });
+    }
+
+    root.querySelectorAll('.lancar-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const f = fixedExpenses.find(x => x.id === btn.dataset.id);
+        if (!f) return;
+        const now = new Date();
+        const dateISO = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          tipo: 'gasto',
+          date: dateISO,
+          valor: f.valor,
+          obs: 'Conta: ' + f.descricao
+        });
+        await saveEntries();
+        if (typeof f.parcelasRestantes === 'number') {
+          f.parcelasRestantes -= 1;
+          if (f.parcelasRestantes <= 0) {
+            fixedExpenses = fixedExpenses.filter(x => x.id !== f.id);
+          }
+        }
+        await saveFixedExpenses();
+        render();
+      });
+    });
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async () => {
+        if (confirm('Apagar todos os registros? Essa ação não pode ser desfeita.')) {
+          entries = [];
+          await saveEntries();
+          render();
+        }
+      });
+    }
+
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const backup = {
+          exportadoEm: new Date().toISOString(),
+          entries,
+          fixedExpenses
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'backup-painel-motorista-' + todayISO() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    const importBtn = document.getElementById('import-btn');
+    const importFile = document.getElementById('import-file');
+    if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => importFile.click());
+      importFile.addEventListener('change', (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const data = JSON.parse(reader.result);
+            const incomingEntries = Array.isArray(data.entries) ? data.entries : [];
+            const incomingFixed = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
+            const merge = confirm(
+              'Importar ' + incomingEntries.length + ' registro(s) e ' + incomingFixed.length + ' conta(s) fixa(s).\n\n' +
+              'Toque OK para MESCLAR com os dados atuais, ou Cancelar para SUBSTITUIR tudo.'
+            );
+            if (merge) {
+              const existingIds = new Set(entries.map(e => e.id));
+              incomingEntries.forEach(e => { if (!existingIds.has(e.id)) entries.push(e); });
+              const existingFixedIds = new Set(fixedExpenses.map(f => f.id));
+              incomingFixed.forEach(f => { if (!existingFixedIds.has(f.id)) fixedExpenses.push(f); });
+            } else {
+              entries = incomingEntries;
+              fixedExpenses = incomingFixed;
+            }
+            await saveEntries();
+            await saveFixedExpenses();
+            render();
+            alert('Backup importado com sucesso!');
+          } catch (e) {
+            alert('Não consegui ler esse arquivo. Confira se é um backup válido exportado por este app.');
+          }
+        };
+        reader.readAsText(file);
+        importFile.value = '';
+      });
+    }
+  }
+
+  async function init() {
+    await loadEntries();
+    await loadFixedExpenses();
+    render();
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
