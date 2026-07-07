@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Painel do Motorista</title>
+
+<!-- PWA / iOS Add to Home Screen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#090b13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Motorista">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+  html, body { margin: 0; padding: 0; background: #090b13; }
+</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-0: #090b13;
+    --bg-1: #12162a;
+    --surface: rgba(255,255,255,0.045);
+    --surface-2: rgba(255,255,255,0.065);
+    --surface-3: rgba(255,255,255,0.09);
+    --border: rgba(255,255,255,0.09);
+    --border-soft: rgba(255,255,255,0.06);
+    --accent: #F2A93B;
+    --accent-bright: #FFD37A;
+    --accent-dim: #B9832E;
+    --accent-soft: rgba(242,169,59,0.14);
+    --accent-glow: rgba(242,169,59,0.30);
+    --positive: #6FCF97;
+    --positive-soft: rgba(111,207,151,0.14);
+    --negative: #E8695C;
+    --negative-soft: rgba(232,105,92,0.14);
+    --text: #F2F0EA;
+    --text-muted: #9298A8;
+    --text-faint: #5D6272;
+    --font-display: 'IBM Plex Mono', 'Courier New', monospace;
+    --font-body: 'Manrope', -apple-system, sans-serif;
+    --font-head: 'Space Grotesk', 'Manrope', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg-0);
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 90% 50% at 50% 100%, var(--accent-glow), transparent 60%),
+      radial-gradient(1.6px 1.6px at 12% 10%, rgba(255,255,255,0.55), transparent),
+      radial-gradient(1.2px 1.2px at 28% 18%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1.6px 1.6px at 47% 7%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 63% 15%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1.4px 1.4px at 78% 9%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 90% 20%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1.2px 1.2px at 8% 28%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 36% 33%, rgba(255,255,255,0.28), transparent),
+      radial-gradient(1.3px 1.3px at 85% 34%, rgba(255,255,255,0.3), transparent),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, var(--bg-0) 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  #app-root {
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 20px 16px 40px;
+    min-height: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .header-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .header-title span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .header-sub { font-size: 12px; color: var(--text-faint); font-family: var(--font-display); margin-top: 3px; }
+
+  /* Odometer-style numbers */
+  .odometer { font-family: var(--font-display); font-weight: 600; display: inline-flex; align-items: baseline; }
+  .odometer .digit {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 3px;
+    margin: 0 1px;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.5);
+    font-variant-numeric: tabular-nums;
+  }
+  .odometer .sep { padding: 0 1px; color: inherit; opacity: 0.7; }
+  .odometer .unit { font-family: var(--font-body); font-weight: 600; font-size: 0.6em; margin-left: 5px; color: var(--text-muted); }
+
+  /* action buttons */
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .action-btn {
+    border: none; border-radius: 12px; padding: 15px; font-family: var(--font-body);
+    font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px; transition: transform 0.15s ease;
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn.ganhos { background: linear-gradient(160deg, #7EE0A6, var(--positive)); color: #0A1F14; box-shadow: 0 6px 24px rgba(111,207,151,0.28); }
+  .action-btn.gastos { background: linear-gradient(160deg, #F08276, var(--negative)); color: #2A0E0A; box-shadow: 0 6px 24px rgba(232,105,92,0.28); }
+  .action-btn .plus { font-size: 17px; line-height: 1; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .summary-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .card {
+    background: linear-gradient(155deg, rgba(255,255,255,0.055), rgba(255,255,255,0.015));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 10px 26px rgba(0,0,0,0.28);
+  }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
+  .card .odometer { font-size: 17px; }
+  .card.accent-positive .odometer { color: var(--positive); text-shadow: 0 0 16px rgba(111,207,151,0.3); }
+  .card.accent-negative .odometer { color: var(--negative); text-shadow: 0 0 16px rgba(232,105,92,0.3); }
+  .card.accent-primary .odometer { color: var(--accent); text-shadow: 0 0 16px rgba(242,169,59,0.3); }
+  .card-foot { font-size: 11px; color: var(--text-faint); margin-top: 6px; font-family: var(--font-display); }
+
+  .period-row {
+    display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .period-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+  }
+  .period-btn.active { background: var(--accent-soft); border-color: var(--accent-dim); color: var(--accent-bright); box-shadow: 0 0 14px rgba(242,169,59,0.18); }
+
+  .panel {
+    background: linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .panel-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; letter-spacing: 0.01em; }
+  .panel-title .hint { font-family: var(--font-body); font-size: 11px; color: var(--text-faint); font-weight: 500; }
+
+  .chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
+  .chart-scroll::-webkit-scrollbar { display: none; }
+  .chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 118px; padding-top: 6px; width: max-content; }
+  .bar-col { flex: 0 0 auto; width: 34px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar-value { font-family: var(--font-display); font-size: 9px; color: var(--text-muted); white-space: nowrap; min-height: 12px; }
+  .bar { width: 100%; max-width: 26px; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .bar-day { font-size: 9px; color: var(--text-faint); font-family: var(--font-display); }
+
+  form.entry-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .field input {
+    background: rgba(0,0,0,0.22);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+  .field input:focus { border-color: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field input::placeholder { color: var(--text-faint); font-family: var(--font-body); }
+
+  .submit-btn {
+    grid-column: 1 / -1;
+    background: linear-gradient(160deg, var(--accent-bright), var(--accent));
+    color: #2A1B05;
+    border: none;
+    border-radius: 9px;
+    padding: 11px;
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 2px;
+    box-shadow: 0 6px 20px rgba(242,169,59,0.25);
+  }
+  .submit-btn:active { opacity: 0.85; }
+
+  .entry-list { display: flex; flex-direction: column; gap: 8px; }
+  .entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+  .entry-date { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--text); width: 62px; flex-shrink: 0; }
+  .entry-mid { flex: 1; display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--font-display); font-size: 11px; color: var(--text-muted); }
+  .entry-mid b { color: var(--text); font-weight: 600; }
+  .entry-obs { width: 100%; font-family: var(--font-body); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .entry-net { font-family: var(--font-display); font-weight: 700; font-size: 13px; margin-left: 10px; flex-shrink: 0; }
+  .del-btn {
+    background: none; border: none; color: var(--text-faint); cursor: pointer;
+    font-size: 16px; padding: 2px 6px; margin-left: 4px; flex-shrink: 0;
+  }
+  .del-btn:hover { color: var(--negative); }
+
+  .lancar-btn {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-dim);
+    color: var(--accent-bright);
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .lancar-btn:hover { background: var(--accent); color: #2A1B05; }
+
+  .fixed-badge {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+  }
+
+  .empty-state { text-align: center; padding: 28px 10px; color: var(--text-faint); font-size: 13px; }
+  .empty-state b { display: block; color: var(--text-muted); font-size: 14px; margin-bottom: 4px; font-family: var(--font-head); }
+
+  .footer-row { display: flex; justify-content: center; margin-top: 8px; }
+  .reset-link { background: none; border: none; color: var(--text-faint); font-size: 11px; text-decoration: underline; cursor: pointer; font-family: var(--font-body); }
+
+  .loading-state { text-align: center; padding: 60px 10px; color: var(--text-faint); font-family: var(--font-display); font-size: 12px; }
+
+  /* modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(5,6,12,0.78);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 50;
+    padding: 0; backdrop-filter: blur(4px);
+  }
+  .modal-card {
+    background: linear-gradient(160deg, #171b2e, #0e1120);
+    border: 1px solid var(--border); border-top: 1px solid rgba(255,255,255,0.12); border-radius: 18px 18px 0 0;
+    padding: 18px 16px 22px; width: 100%; max-width: 780px; max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  }
+  @media (min-width: 620px) {
+    .modal-backdrop { align-items: center; }
+    .modal-card { border-radius: 18px; max-width: 480px; border-top: 1px solid var(--border); }
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .modal-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+  .modal-close { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px; }
+
+  @media (max-width: 420px) {
+    .cards { grid-template-columns: 1fr 1fr; }
+    form.entry-form { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div id="app-root">
+  <div class="loading-state">Carregando seus dados…</div>
+</div>
+
+<script>
+(function () {
+  const root = document.getElementById('app-root');
+
+  // Shim de armazenamento local (funciona fora do Claude, dados presos a este navegador)
+  const memoryFallback = {};
+  let storageAvailable = true;
+  try {
+    const testKey = '__test__' + Date.now();
+    window.localStorage.setItem(testKey, '1');
+    window.localStorage.removeItem(testKey);
+  } catch (e) {
+    storageAvailable = false;
+  }
+  const storage = {
+    get: async (key) => {
+      const raw = storageAvailable ? window.localStorage.getItem(key) : (key in memoryFallback ? memoryFallback[key] : null);
+      if (raw === null || raw === undefined) throw new Error('not found');
+      return { key, value: raw };
+    },
+    set: async (key, value) => {
+      if (storageAvailable) window.localStorage.setItem(key, value);
+      else memoryFallback[key] = value;
+      return { key, value };
+    }
+  };
+
+  const STORAGE_KEY = 'entries';
+  const FIXED_KEY = 'fixed_expenses';
+  const SEED_KEY = 'fixed_seeded';
+  const BATTERY_CAPACITY_KWH = 44.9; // BYD Dolphin GS
+
+  let entries = [];
+  let fixedExpenses = [];
+  let period = 'month'; // today | week | month | all | custom
+  let chartScrollLeft = null; // null = ainda não inicializado (rola pro fim / hoje)
+  let customStart = null;
+  let customEnd = null;
+  let activeModal = null; // null | 'ganhos' | 'gastos'
+  let pendingConfirm = null; // { title, message, buttons: [{label, kind, run}] }
+
+  function askConfirm(title, message, buttons) {
+    pendingConfirm = { title, message, buttons };
+    render();
+  }
+  function askNotice(title, message) {
+    askConfirm(title, message, [{ label: 'OK', kind: 'primary', run: () => {} }]);
+  }
+
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtBRL(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtBRLShort(v) {
+    const n = Number(v) || 0;
+    if (n >= 1000) return (n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+    return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  }
+  function fmtKm(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function fmtKwh(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function fmtDateShort(iso) {
+    const [y,m,d] = iso.split('-');
+    return d + '/' + m;
+  }
+  function formatDateBR(iso) {
+    if (!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return d + '/' + m + '/' + y;
+  }
+  function formatRangeBR(start, end) {
+    if (!start || !end) return '';
+    return formatDateBR(start) + ' até ' + formatDateBR(end);
+  }
+  function odometer(str, unit) {
+    const chars = str.split('').map(ch => {
+      if (/[0-9]/.test(ch)) return '<span class="digit">' + ch + '</span>';
+      return '<span class="sep">' + ch + '</span>';
+    }).join('');
+    return '<span class="odometer">' + chars + (unit ? '<span class="unit">' + unit + '</span>' : '') + '</span>';
+  }
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function loadEntries() {
+    try {
+      const res = await storage.get(STORAGE_KEY);
+      entries = res && res.value ? JSON.parse(res.value) : [];
+    } catch (e) {
+      entries = [];
+    }
+  }
+  async function saveEntries() {
+    try {
+      await storage.set(STORAGE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      console.error('Falha ao salvar', e);
+    }
+  }
+
+  async function loadFixedExpenses() {
+    try {
+      const res = await storage.get(FIXED_KEY);
+      fixedExpenses = res && res.value ? JSON.parse(res.value) : [];
+    } catch (e) {
+      fixedExpenses = [];
+    }
+    try {
+      await storage.get(SEED_KEY);
+    } catch (e) {
+      fixedExpenses = [
+        { id: 'f_mei', descricao: 'MEI', valor: 86.05, dia: 20, parcelasRestantes: null },
+        { id: 'f_carro', descricao: 'Prestação do carro', valor: 4229.45, dia: 16, parcelasRestantes: 23 }
+      ];
+      await saveFixedExpenses();
+      try { await storage.set(SEED_KEY, 'true'); } catch (e2) {}
+    }
+  }
+  async function saveFixedExpenses() {
+    try {
+      await storage.set(FIXED_KEY, JSON.stringify(fixedExpenses));
+    } catch (e) {
+      console.error('Falha ao salvar contas fixas', e);
+    }
+  }
+  function fixedMonthlyTotal() {
+    return fixedExpenses.reduce((s, f) => s + (Number(f.valor) || 0), 0);
+  }
+
+  function filterByPeriod(list) {
+    if (period === 'custom') return list.filter(e => e.date >= customStart && e.date <= customEnd);
+    if (period === 'all') return list;
+    const now = new Date();
+    const today = todayISO();
+    if (period === 'today') return list.filter(e => e.date === today);
+    if (period === 'week') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 6);
+      const cutoffISO = cutoff.getFullYear() + '-' + String(cutoff.getMonth()+1).padStart(2,'0') + '-' + String(cutoff.getDate()).padStart(2,'0');
+      return list.filter(e => e.date >= cutoffISO);
+    }
+    if (period === 'month') {
+      const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      return list.filter(e => e.date.startsWith(ym));
+    }
+    return list;
+  }
+
+  // Entradas podem ser tipo 'ganho' ou 'gasto' (novo modelo).
+  // Registros antigos sem "tipo" combinavam tudo numa linha só — seguem funcionando.
+  function computeTotals(list) {
+    let ganhos = 0, gastos = 0, km = 0, corridas = 0, kwh = 0, kwhKm = 0;
+    list.forEach(e => {
+      if (e.tipo === 'gasto') {
+        gastos += Number(e.valor) || 0;
+        return;
+      }
+      // tipo 'ganho' ou registro legado (sem tipo)
+      ganhos += Number(e.ganhos) || 0;
+      km += Number(e.km) || 0;
+      corridas += Number(e.corridas) || 0;
+      if (e.tipo === undefined) gastos += Number(e.gastos) || 0; // legado
+      if (e.bateriaSaida !== undefined && e.bateriaSaida !== null && e.bateriaSaida !== '' &&
+          e.bateriaChegada !== undefined && e.bateriaChegada !== null && e.bateriaChegada !== '') {
+        const pct = Math.max(0, (Number(e.bateriaSaida) || 0) - (Number(e.bateriaChegada) || 0));
+        const entryKwh = (pct / 100) * BATTERY_CAPACITY_KWH;
+        kwh += entryKwh;
+        if (Number(e.km) > 0) kwhKm += Number(e.km);
+      }
+    });
+    const liquido = ganhos - gastos;
+    const rsPorKm = km > 0 ? liquido / km : 0;
+    const ganhoPorKm = km > 0 ? ganhos / km : 0;
+    const consumoPor100km = kwhKm > 0 ? (kwh / kwhKm) * 100 : 0;
+    return { ganhos, gastos, km, corridas, liquido, rsPorKm, ganhoPorKm, kwh, consumoPor100km };
+  }
+
+  function monthGrossData() {
+    const now = new Date();
+    const total = daysInMonth(now);
+    const days = [];
+    for (let day = 1; day <= total; day++) {
+      const iso = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const dayEntries = entries.filter(e => e.date === iso);
+      const t = computeTotals(dayEntries);
+      days.push({ iso, ganhos: t.ganhos, dayNum: day });
+    }
+    return days;
+  }
+  function daysInMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+
+  function render() {
+    const filtered = filterByPeriod(entries).sort((a,b) => b.date.localeCompare(a.date));
+    const totals = computeTotals(filtered);
+    const chartData = monthGrossData();
+    const maxAbs = Math.max(1, ...chartData.map(d => d.ganhos));
+    const periodLabels = { today: 'Hoje', week: '7 dias', month: 'Este mês', all: 'Tudo' };
+
+    root.innerHTML = `
+      <div class="header">
+        <div>
+          <div class="header-title">Painel do <span>Motorista</span></div>
+          <div class="header-sub">BYD Dolphin GS · elétrico · dados salvos neste navegador</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn ganhos" id="open-ganhos"><span class="plus">+</span> Ganhos</button>
+        <button class="action-btn gastos" id="open-gastos"><span class="plus">+</span> Gastos</button>
+      </div>
+
+      <div class="summary-cards">
+        <div class="card accent-positive">
+          <div class="card-label">Ganhos</div>
+          ${odometer('R$ ' + fmtBRL(totals.ganhos))}
+          <div class="card-foot">${totals.corridas} corrida${totals.corridas === 1 ? '' : 's'} · R$ ${fmtBRL(totals.ganhoPorKm)}/km</div>
+        </div>
+        <div class="card accent-negative">
+          <div class="card-label">Gastos</div>
+          ${odometer('R$ ' + fmtBRL(totals.gastos))}
+          <div class="card-foot">recarga, manutenção, contas etc.</div>
+        </div>
+        <div class="card ${totals.liquido >= 0 ? 'accent-positive' : 'accent-negative'}">
+          <div class="card-label">Saldo líquido</div>
+          ${odometer((totals.liquido < 0 ? '-' : '') + 'R$ ' + fmtBRL(Math.abs(totals.liquido)))}
+          <div class="card-foot">R$ ${fmtBRL(totals.rsPorKm)} / km</div>
+        </div>
+        <div class="card accent-primary">
+          <div class="card-label">Km rodados</div>
+          ${odometer(fmtKm(totals.km), 'km')}
+          <div class="card-foot">${periodLabels[period] || formatRangeBR(customStart, customEnd)}</div>
+        </div>
+      </div>
+
+      <div class="period-row">
+        ${['today','week','month','all'].map(p => `<button class="period-btn ${p === period ? 'active' : ''}" data-period="${p}">${periodLabels[p]}</button>`).join('')}
+      </div>
+
+      <div class="panel" style="margin-bottom:18px;">
+        <div class="panel-title">Selecionar período <span class="hint">${period === 'custom' ? formatRangeBR(customStart, customEnd) : 'de uma data até outra'}</span></div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="field" style="flex:1; min-width:130px;">
+            <label>De</label>
+            <input type="date" id="custom-start-input" value="${customStart || ''}" style="background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:8px; padding:9px 10px; color:var(--text); font-family:var(--font-display); font-size:13px; width:100%;" />
+          </div>
+          <div class="field" style="flex:1; min-width:130px;">
+            <label>Até</label>
+            <input type="date" id="custom-end-input" value="${customEnd || ''}" style="background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:8px; padding:9px 10px; color:var(--text); font-family:var(--font-display); font-size:13px; width:100%;" />
+          </div>
+          <button class="submit-btn" id="apply-custom-range" style="grid-column:auto; width:auto; padding:10px 16px; align-self:flex-end;">Aplicar</button>
+          ${period === 'custom' ? `<button class="period-btn" id="clear-custom-date">limpar</button>` : ''}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Bateria <span class="hint">capacidade: 44,9 kWh</span></div>
+        <div class="cards" style="margin-bottom:0;">
+          <div class="card accent-primary">
+            <div class="card-label">Energia consumida</div>
+            ${odometer(fmtKwh(totals.kwh), 'kWh')}
+            <div class="card-foot">${periodLabels[period] || formatRangeBR(customStart, customEnd)}</div>
+          </div>
+          <div class="card accent-primary">
+            <div class="card-label">Consumo médio</div>
+            ${totals.consumoPor100km > 0 ? odometer(fmtKwh(totals.consumoPor100km), 'kWh/100km') : `<span class="odometer" style="color:var(--text-faint); font-size:13px;">sem dados suficientes</span>`}
+            <div class="card-foot">a cada 100 km rodados</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Ganhos do mês <span class="hint">arraste para o lado · dia a dia</span></div>
+        <div class="chart-scroll" id="chart-scroll">
+          <div class="chart-wrap">
+            ${chartData.map(d => {
+              const h = Math.max(3, Math.round((d.ganhos / maxAbs) * 66));
+              const isToday = d.iso === todayISO();
+              return `<div class="bar-col">
+                <div class="bar-value">${d.ganhos > 0 ? fmtBRLShort(d.ganhos) : ''}</div>
+                <div class="bar" style="height:${h}px; background:${isToday ? 'var(--accent)' : 'var(--positive)'};" title="Dia ${d.dayNum}: R$ ${fmtBRL(d.ganhos)}"></div>
+                <div class="bar-day">${d.dayNum}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Contas fixas e parcelas <span class="hint">R$ ${fmtBRL(fixedMonthlyTotal())}/mês comprometido</span></div>
+        <div class="entry-list">
+          ${fixedExpenses.length === 0 ? `
+            <div class="empty-state">
+              <b>Nenhuma conta cadastrada</b>
+              Adicione MEI, prestação do carro, compras parceladas etc.
+            </div>
+          ` : fixedExpenses.slice().sort((a,b) => a.dia - b.dia).map(f => `
+            <div class="entry-row">
+              <div class="entry-date">dia ${f.dia}</div>
+              <div class="entry-mid">
+                <span><b>${escapeHtml(f.descricao)}</b></span>
+                <span>R$ <b>${fmtBRL(f.valor)}</b></span>
+                <span class="fixed-badge">${f.parcelasRestantes === null || f.parcelasRestantes === undefined ? 'fixo/recorrente' : f.parcelasRestantes + 'x restante' + (f.parcelasRestantes === 1 ? '' : 's')}</span>
+              </div>
+              <button class="lancar-btn" data-id="${f.id}">Lançar este mês</button>
+              <button class="del-btn" data-fixedid="${f.id}" title="Excluir">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <form class="entry-form" id="fixed-form" style="margin-top:12px;">
+          <div class="field full">
+            <label>Descrição</label>
+            <input type="text" name="descricao" placeholder="ex: notebook em 10x" required />
+          </div>
+          <div class="field">
+            <label>Valor da parcela (R$)</label>
+            <input type="number" name="valor" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field">
+            <label>Dia de vencimento</label>
+            <input type="number" name="dia" min="1" max="31" placeholder="ex: 10" required />
+          </div>
+          <div class="field full">
+            <label>Parcelas restantes (deixe em branco se for fixo, tipo MEI)</label>
+            <input type="number" name="parcelas" min="1" step="1" placeholder="ex: 10" />
+          </div>
+          <button type="submit" class="submit-btn">Adicionar conta</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <button class="lancar-btn" id="open-historico" style="width:100%; padding:12px; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px;">
+          📜 Ver histórico <span class="fixed-badge">${filtered.length} registro${filtered.length === 1 ? '' : 's'}</span>
+        </button>
+      </div>
+
+      ${entries.length > 0 ? `
+      <div class="footer-row">
+        <button class="reset-link" id="reset-btn">apagar todos os registros</button>
+      </div>` : ''}
+
+      <div class="footer-row" style="gap:16px; margin-top:${entries.length > 0 ? '6' : '8'}px;">
+        <button class="reset-link" id="export-btn">exportar backup</button>
+        <button class="reset-link" id="import-btn">importar backup</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none;" />
+      </div>
+
+      ${activeModal === 'ganhos' ? modalGanhos() : ''}
+      ${activeModal === 'gastos' ? modalGastos() : ''}
+      ${activeModal === 'historico' ? modalHistorico(filtered) : ''}
+      ${pendingConfirm ? modalConfirm() : ''}
+    `;
+
+    bindEvents();
+
+    const chartScroll = document.getElementById('chart-scroll');
+    if (chartScroll) {
+      if (chartScrollLeft === null) {
+        const todayDayNum = new Date().getDate();
+        const colPitch = 34 + 8; // largura da coluna + gap
+        // hoje deve ficar como a 7ª barra visível (índice 6, 0-based)
+        const targetScroll = Math.max(0, (todayDayNum - 7) * colPitch);
+        chartScroll.scrollLeft = targetScroll;
+      } else {
+        chartScroll.scrollLeft = chartScrollLeft;
+      }
+      chartScroll.addEventListener('scroll', () => {
+        chartScrollLeft = chartScroll.scrollLeft;
+      }, { passive: true });
+    }
+  }
+
+  function modalGanhos() {
+    return `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">＋ Registrar ganhos do dia</div>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <form class="entry-form" id="ganhos-form">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" name="date" value="${todayISO()}" required />
+          </div>
+          <div class="field">
+            <label>Corridas</label>
+            <input type="number" name="corridas" min="0" step="1" placeholder="0" />
+          </div>
+          <div class="field">
+            <label>Ganhos (R$)</label>
+            <input type="number" name="ganhos" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field">
+            <label>Km rodados</label>
+            <input type="number" name="km" min="0" step="0.1" placeholder="0,0" />
+          </div>
+          <div class="field">
+            <label>Bateria ao sair (%)</label>
+            <input type="number" name="bateriaSaida" min="0" max="100" step="1" placeholder="100" value="100" />
+          </div>
+          <div class="field">
+            <label>Bateria ao voltar (%)</label>
+            <input type="number" name="bateriaChegada" min="0" max="100" step="1" placeholder="ex: 15" />
+          </div>
+          <div class="field full">
+            <label>Observação (opcional)</label>
+            <input type="text" name="obs" placeholder="ex: dia parado no trânsito" />
+          </div>
+          <button type="submit" class="submit-btn" style="background:var(--positive);">Salvar ganhos</button>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  function modalGastos() {
+    return `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">－ Registrar gasto</div>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <form class="entry-form" id="gastos-form">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" name="date" value="${todayISO()}" required />
+          </div>
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" name="valor" min="0" step="0.01" placeholder="0,00" required />
+          </div>
+          <div class="field full">
+            <label>Observação (opcional)</label>
+            <input type="text" name="obs" placeholder="ex: recarga no posto X" />
+          </div>
+          <button type="submit" class="submit-btn" style="background:var(--negative);">Salvar gasto</button>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  function modalHistorico(filtered) {
+    return `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card" style="max-height:85vh;">
+        <div class="modal-head">
+          <div class="modal-title">📜 Histórico <span class="fixed-badge" style="margin-left:8px;">${filtered.length} registro${filtered.length === 1 ? '' : 's'}</span></div>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <div class="entry-list">
+          ${filtered.length === 0 ? `
+            <div class="empty-state">
+              <b>Nenhum registro ainda</b>
+              Use os botões "+ Ganhos" e "+ Gastos" para começar.
+            </div>
+          ` : filtered.map(e => {
+            if (e.tipo === 'gasto') {
+              return `
+              <div class="entry-row">
+                <div class="entry-date">${fmtDateShort(e.date)}</div>
+                <div class="entry-mid">
+                  <span>⚡ <b>R$ ${fmtBRL(e.valor)}</b></span>
+                  ${e.obs ? `<div class="entry-obs">${escapeHtml(e.obs)}</div>` : ''}
+                </div>
+                <div class="entry-net" style="color:var(--negative)">- R$ ${fmtBRL(e.valor)}</div>
+                <button class="del-btn" data-id="${e.id}" title="Excluir">✕</button>
+              </div>`;
+            }
+            // tipo 'ganho' ou legado
+            const net = (Number(e.ganhos)||0) - (Number(e.gastos)||0);
+            const hasBattery = e.bateriaSaida !== undefined && e.bateriaSaida !== null &&
+                                e.bateriaChegada !== undefined && e.bateriaChegada !== null;
+            const pctUsada = hasBattery ? Math.max(0, e.bateriaSaida - e.bateriaChegada) : 0;
+            const kwhUsado = hasBattery ? (pctUsada / 100) * BATTERY_CAPACITY_KWH : 0;
+            const consumo100 = hasBattery && e.km > 0 ? (kwhUsado / e.km) * 100 : null;
+            const autonomiaEstimada = hasBattery && pctUsada > 0 && e.km > 0 ? (Number(e.km) / pctUsada) * 100 : null;
+            const ganhoPorKm = e.km > 0 ? (Number(e.ganhos) || 0) / Number(e.km) : null;
+            return `
+            <div class="entry-row">
+              <div class="entry-date">${fmtDateShort(e.date)}</div>
+              <div class="entry-mid">
+                <span>💰 <b>R$ ${fmtBRL(e.ganhos)}</b></span>
+                ${e.corridas ? `<span>🚗 <b>${e.corridas}</b></span>` : ''}
+                ${e.km ? `<span>📍 <b>${fmtKm(e.km)} km</b></span>` : ''}
+                ${ganhoPorKm !== null ? `<span>💵 <b>R$ ${fmtBRL(ganhoPorKm)}</b>/km</span>` : ''}
+                ${e.tipo === undefined && e.gastos ? `<span>⚡ <b>R$ ${fmtBRL(e.gastos)}</b></span>` : ''}
+                ${hasBattery ? `<span>🔋 <b>${e.bateriaSaida}%→${e.bateriaChegada}%</b> (${fmtKwh(kwhUsado)} kWh${consumo100 ? ' · ' + fmtKwh(consumo100) + '/100km' : ''})</span>` : ''}
+                ${autonomiaEstimada !== null ? `<span>🔋📏 <b>${fmtKm(autonomiaEstimada)} km</b> autonomia (carga cheia)</span>` : ''}
+                ${e.obs ? `<div class="entry-obs">${escapeHtml(e.obs)}</div>` : ''}
+              </div>
+              <div class="entry-net" style="color:${net >= 0 ? 'var(--positive)' : 'var(--negative)'}">R$ ${fmtBRL(net)}</div>
+              <button class="del-btn" data-id="${e.id}" title="Excluir">✕</button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function modalConfirm() {
+    const { title, message, buttons } = pendingConfirm;
+    return `
+    <div class="modal-backdrop" id="confirm-backdrop" style="z-index:70;">
+      <div class="modal-card" style="max-width:360px; padding:20px 18px;">
+        <div class="modal-title" style="margin-bottom:8px;">${title}</div>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin:0 0 18px;">${message}</p>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${buttons.map((b, i) => {
+            const bg = b.kind === 'danger' ? 'linear-gradient(160deg, #F08276, var(--negative))'
+                     : b.kind === 'cancel' ? 'var(--surface-2)'
+                     : 'linear-gradient(160deg, var(--accent-bright), var(--accent))';
+            const color = b.kind === 'cancel' ? 'var(--text)' : (b.kind === 'danger' ? '#2A0E0A' : '#2A1B05');
+            const border = b.kind === 'cancel' ? '1px solid var(--border)' : 'none';
+            return `<button class="confirm-btn" data-idx="${i}" style="background:${bg}; color:${color}; border:${border}; border-radius:9px; padding:11px; font-family:var(--font-body); font-weight:800; font-size:13px; cursor:pointer;">${b.label}</button>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function bindEvents() {
+    root.querySelectorAll('.confirm-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.idx);
+        const action = pendingConfirm && pendingConfirm.buttons[idx] ? pendingConfirm.buttons[idx].run : null;
+        pendingConfirm = null;
+        if (action) await action();
+        render();
+      });
+    });
+    const confirmBackdrop = document.getElementById('confirm-backdrop');
+    if (confirmBackdrop) {
+      confirmBackdrop.addEventListener('click', (ev) => {
+        if (ev.target === confirmBackdrop) { pendingConfirm = null; render(); }
+      });
+    }
+
+    root.querySelectorAll('.period-btn').forEach(btn => {
+      if (!btn.dataset.period) return;
+      btn.addEventListener('click', () => { period = btn.dataset.period; render(); });
+    });
+
+    const applyRange = document.getElementById('apply-custom-range');
+    if (applyRange) {
+      applyRange.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const startInput = document.getElementById('custom-start-input');
+        const endInput = document.getElementById('custom-end-input');
+        const start = startInput ? startInput.value : '';
+        const end = endInput ? endInput.value : '';
+        if (!start || !end) {
+          askNotice('Faltam datas', 'Escolha as duas datas (de / até) antes de aplicar.');
+          return;
+        }
+        if (start > end) {
+          askNotice('Datas fora de ordem', 'A data "De" precisa ser antes (ou igual) da data "Até".');
+          return;
+        }
+        customStart = start;
+        customEnd = end;
+        period = 'custom';
+        render();
+      });
+    }
+    const clearCustomDate = document.getElementById('clear-custom-date');
+    if (clearCustomDate) {
+      clearCustomDate.addEventListener('click', () => {
+        customStart = null;
+        customEnd = null;
+        period = 'month';
+        render();
+      });
+    }
+
+    const openGanhos = document.getElementById('open-ganhos');
+    if (openGanhos) openGanhos.addEventListener('click', () => { activeModal = 'ganhos'; render(); });
+    const openGastos = document.getElementById('open-gastos');
+    if (openGastos) openGastos.addEventListener('click', () => { activeModal = 'gastos'; render(); });
+    const openHistorico = document.getElementById('open-historico');
+    if (openHistorico) openHistorico.addEventListener('click', () => { activeModal = 'historico'; render(); });
+
+    const backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) backdrop.addEventListener('click', (ev) => {
+      if (ev.target === backdrop) { activeModal = null; render(); }
+    });
+    const modalClose = document.getElementById('modal-close');
+    if (modalClose) modalClose.addEventListener('click', () => { activeModal = null; render(); });
+
+    const ganhosForm = document.getElementById('ganhos-form');
+    if (ganhosForm) {
+      ganhosForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ganhosForm);
+        entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          tipo: 'ganho',
+          date: fd.get('date') || todayISO(),
+          ganhos: parseFloat(fd.get('ganhos')) || 0,
+          km: parseFloat(fd.get('km')) || 0,
+          corridas: parseInt(fd.get('corridas')) || 0,
+          bateriaSaida: fd.get('bateriaSaida') !== '' ? parseFloat(fd.get('bateriaSaida')) : null,
+          bateriaChegada: fd.get('bateriaChegada') !== '' ? parseFloat(fd.get('bateriaChegada')) : null,
+          obs: (fd.get('obs') || '').toString().slice(0, 140)
+        });
+        await saveEntries();
+        activeModal = null;
+        render();
+      });
+    }
+
+    const gastosForm = document.getElementById('gastos-form');
+    if (gastosForm) {
+      gastosForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(gastosForm);
+        entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          tipo: 'gasto',
+          date: fd.get('date') || todayISO(),
+          valor: parseFloat(fd.get('valor')) || 0,
+          obs: (fd.get('obs') || '').toString().slice(0, 140)
+        });
+        await saveEntries();
+        activeModal = null;
+        render();
+      });
+    }
+
+    root.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.fixedid) {
+          const f = fixedExpenses.find(x => x.id === btn.dataset.fixedid);
+          const nome = f ? f.descricao : 'essa conta';
+          askConfirm('Excluir conta fixa?', 'Excluir "' + nome + '" da lista de contas fixas?', [
+            { label: 'Cancelar', kind: 'cancel', run: () => {} },
+            { label: 'Excluir', kind: 'danger', run: async () => {
+              fixedExpenses = fixedExpenses.filter(x => x.id !== btn.dataset.fixedid);
+              await saveFixedExpenses();
+            }}
+          ]);
+        } else if (btn.dataset.id) {
+          askConfirm('Excluir registro?', 'Essa ação não pode ser desfeita.', [
+            { label: 'Cancelar', kind: 'cancel', run: () => {} },
+            { label: 'Excluir', kind: 'danger', run: async () => {
+              entries = entries.filter(e => e.id !== btn.dataset.id);
+              await saveEntries();
+            }}
+          ]);
+        }
+      });
+    });
+
+    const fixedForm = document.getElementById('fixed-form');
+    if (fixedForm) {
+      fixedForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(fixedForm);
+        const parcelasRaw = fd.get('parcelas');
+        const item = {
+          id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          descricao: (fd.get('descricao') || '').toString().slice(0, 60),
+          valor: parseFloat(fd.get('valor')) || 0,
+          dia: Math.min(31, Math.max(1, parseInt(fd.get('dia')) || 1)),
+          parcelasRestantes: parcelasRaw ? parseInt(parcelasRaw) : null
+        };
+        fixedExpenses.push(item);
+        await saveFixedExpenses();
+        render();
+      });
+    }
+
+    root.querySelectorAll('.lancar-btn[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const f = fixedExpenses.find(x => x.id === btn.dataset.id);
+        if (!f) return;
+        askConfirm('Lançar conta do mês?', 'Lançar "' + f.descricao + '" (R$ ' + fmtBRL(f.valor) + ') como gasto deste mês?', [
+          { label: 'Cancelar', kind: 'cancel', run: () => {} },
+          { label: 'Lançar', kind: 'primary', run: async () => {
+            const now = new Date();
+            const dateISO = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            entries.push({
+              id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+              tipo: 'gasto',
+              date: dateISO,
+              valor: f.valor,
+              obs: 'Conta: ' + f.descricao
+            });
+            await saveEntries();
+            if (typeof f.parcelasRestantes === 'number') {
+              f.parcelasRestantes -= 1;
+              if (f.parcelasRestantes <= 0) {
+                fixedExpenses = fixedExpenses.filter(x => x.id !== f.id);
+              }
+            }
+            await saveFixedExpenses();
+          }}
+        ]);
+      });
+    });
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        askConfirm('Apagar tudo?', 'Isso vai apagar todos os registros. Essa ação não pode ser desfeita.', [
+          { label: 'Cancelar', kind: 'cancel', run: () => {} },
+          { label: 'Apagar tudo', kind: 'danger', run: async () => {
+            entries = [];
+            await saveEntries();
+          }}
+        ]);
+      });
+    }
+
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const backup = {
+          exportadoEm: new Date().toISOString(),
+          entries,
+          fixedExpenses
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'backup-painel-motorista-' + todayISO() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    const importBtn = document.getElementById('import-btn');
+    const importFile = document.getElementById('import-file');
+    if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => importFile.click());
+      importFile.addEventListener('change', (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          let data;
+          try {
+            data = JSON.parse(reader.result);
+          } catch (e) {
+            askNotice('Não deu certo', 'Não consegui ler esse arquivo. Confira se é um backup válido exportado por este app.');
+            return;
+          }
+          const incomingEntries = Array.isArray(data.entries) ? data.entries : [];
+          const incomingFixed = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
+          askConfirm(
+            'Importar backup',
+            'Encontrei ' + incomingEntries.length + ' registro(s) e ' + incomingFixed.length + ' conta(s) fixa(s) nesse arquivo. Como você quer importar?',
+            [
+              { label: 'Cancelar', kind: 'cancel', run: () => {} },
+              { label: 'Mesclar com os dados atuais', kind: 'primary', run: async () => {
+                const existingIds = new Set(entries.map(e => e.id));
+                incomingEntries.forEach(e => { if (!existingIds.has(e.id)) entries.push(e); });
+                const existingFixedIds = new Set(fixedExpenses.map(f => f.id));
+                incomingFixed.forEach(f => { if (!existingFixedIds.has(f.id)) fixedExpenses.push(f); });
+                await saveEntries();
+                await saveFixedExpenses();
+                askNotice('Pronto!', 'Backup mesclado com sucesso.');
+              }},
+              { label: 'Substituir tudo', kind: 'danger', run: async () => {
+                entries = incomingEntries;
+                fixedExpenses = incomingFixed;
+                await saveEntries();
+                await saveFixedExpenses();
+                askNotice('Pronto!', 'Backup importado com sucesso.');
+              }}
+            ]
+          );
+        };
+        reader.readAsText(file);
+        importFile.value = '';
+      });
+    }
+  }
+
+  async function init() {
+    await loadEntries();
+    await loadFixedExpenses();
+    render();
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
